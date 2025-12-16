@@ -32,7 +32,7 @@ FetchContent_MakeAvailable(ImGui-SFML)
 
 set(SOURCES
     "src/main.cpp" 
-    "src/UI/uiManager.cpp")
+    "src/UI/uiManager.cpp" "src/UI/editor/uiObjManager.cpp" "src/object/Object.h" "src/UI/editor/uiObjManager.h")
 
 add_executable(VulpesEditor ${SOURCES})
 target_compile_features(VulpesEditor PRIVATE cxx_std_17)
