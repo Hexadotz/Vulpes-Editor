@@ -1,8 +1,9 @@
 #pragma once
+
 #ifndef UIMANAGER_H
 #define UIMANAGER_H
-
 #endif
+
 #include <SFML/Graphics.hpp>
 #include <imgui.h>
 
@@ -12,10 +13,9 @@ public:
 
 	// methods
 	static int initialize_Ui(sf::RenderWindow& window);
-	static int confirm_window(const char* msg);
+	static bool confirm_window(const char* msg);
 	static void draw_Ui();
 	static void shutdown_Ui();
-	static void scene_hierarchy();
-	static void test_Ui();
-
+private:
+	static void debug_panel();
 };

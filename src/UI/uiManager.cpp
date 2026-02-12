@@ -1,6 +1,9 @@
 #include "uiManager.h"
+#include "editor/uiObjManager.h"
+#include "editor/uiEditorToolsManager.h"
 #include <imgui-SFML.h>
 #include <imgui.h>
+#include <iostream>
 
 bool show_confirm_popup = false;
 int selected_object = -1;
@@ -18,104 +21,67 @@ int uiManager::initialize_Ui(sf::RenderWindow& window) {
 }
 
 void uiManager::draw_Ui() {
-   // for the actual Ui drawing
     main_menu_Bar_setup();
-    //uiManager::scene_hierarchy();
+    objectManagerUi::draw_Ui();
+    editorToolManagerUI::draw_ui();
+    uiManager::debug_panel();
+
+    ImGui::ShowStyleEditor();
 }
 
 void uiManager::shutdown_Ui() {
     ImGui::SFML::Shutdown();
 }
 
-void uiManager::test_Ui() {
-    ImGui::ShowDemoWindow();
-    //uiManager::confirm_window("Are you sure you want to quit?");
-    main_menu_Bar_setup();
-    static bool closable_group = true;
-    ImGui::Begin("Test Panel", &closable_group);
-    if (ImGui::Button("fuck you"))
+// used for debugging stuff
+void uiManager::debug_panel() {
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center);
+    ImGui::SetNextWindowSize(ImVec2(250, 200));
+    ImGui::Begin("Vulpes Debug Panel", nullptr);
+    if (ImGui::Button("Test Button"))
     {
-        show_confirm_popup = true;
-    }
-    
-    //uiManager::scene_hierarchy();
 
-    static bool check = true;
-    ImGui::Checkbox("checkbox", &check);
+    }
     ImGui::End();
 }
 
-void uiManager::scene_hierarchy() {
-    static std::vector <std::pair<std::string, std::vector<std::string>>> objects = {
-        {"Player", {"Transform", "Sprite", "Script"}},
-        {"Enemy", {"Transform", "Sprite"}},
-        {"Camera", {"Transform", "Camera"}},
-        {"Light", {"Transform", "Light"}}
-    };
-    if (ImGui::Begin("Scene Hierarchy")) {
+bool uiManager::confirm_window(const char* msg) {
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    bool resault = false;
 
-        for (int i = 0; i < objects.size(); i++) {
-            auto& [name, components] = objects[i];
-
-            
-            ImGuiTreeNodeFlags flags = ImGuiTreeNodeFlags_OpenOnArrow |
-                ImGuiTreeNodeFlags_SpanAvailWidth;
-
-            if (selected_object == i) {
-                flags |= ImGuiTreeNodeFlags_Selected;
-            }
-
-            bool is_open = ImGui::TreeNodeEx(name.c_str(), flags);
-
-            // Handle selection
-            if (ImGui::IsItemClicked()) {
-                selected_object = i;
-            }
-
-            // Draw components if open
-            if (is_open) {
-                for (auto& component : components) {
-                    ImGui::TreeNodeEx(component.c_str(),
-                        ImGuiTreeNodeFlags_Leaf |
-                        ImGuiTreeNodeFlags_NoTreePushOnOpen
-                    );
-                }
-                ImGui::TreePop();
-            }
-        }
-    }
-    ImGui::End();;
-}
-
-
-int uiManager::confirm_window(const char *msg) {
     if (show_confirm_popup)
     {
-        ImGui::SetNextWindowSize(ImVec2(200, 100));
-        ImGui::OpenPopup("my_file_popup");
+        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));;
+        ImGui::OpenPopup("Confirm");
     }
-    
-    int resault = -1;
 
-    if (ImGui::BeginPopup("my_file_popup", ImGuiWindowFlags_MenuBar))
+    if (ImGui::BeginPopupModal("Confirm", NULL, ImGuiWindowFlags_AlwaysAutoResize))
     {
         ImGui::Text(msg);
         ImGui::Separator();
-        if (ImGui::Button("Cancel"))
-        {
-            resault = 0;
-            ImGui::CloseCurrentPopup();
+
+        static bool dont_ask_me_next_time = false;
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(0, 0));
+        ImGui::Checkbox("Don't ask me next time", &dont_ask_me_next_time);
+        ImGui::PopStyleVar();
+
+        if (ImGui::Button("OK", ImVec2(120, 0))) { 
+            resault = true;
+            
+            ImGui::CloseCurrentPopup(); 
         }
+        ImGui::SetItemDefaultFocus();
         ImGui::SameLine();
-        if (ImGui::Button("Confirm"))
-        {   
-            resault = 1;
-            ImGui::CloseCurrentPopup();
+        if (ImGui::Button("Cancel", ImVec2(120, 0))) { 
+            resault = false;
+            ImGui::CloseCurrentPopup(); 
         }
         ImGui::EndPopup();
-    }
-    show_confirm_popup = false;
-    return resault;
+        show_confirm_popup = false;
+        //std::cout << std::boolalpha << resault;
+        return resault;
+    }  
 }
 
 void main_menu_Bar_setup() {
@@ -133,10 +99,10 @@ void main_menu_Bar_setup() {
         
         // Editor Menu stuff
         if (ImGui::BeginMenu("Edit")) {
-            if (ImGui::MenuItem("Undo", "Ctrl+Z")) {
+            if (ImGui::MenuItem("Undo")) {
                 //
             };
-            if (ImGui::MenuItem("Redo", "Ctrl+Y")) {
+            if (ImGui::MenuItem("Redo")) {
                 //
             };
             ImGui::EndMenu();
