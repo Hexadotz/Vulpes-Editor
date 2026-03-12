@@ -20,11 +20,5 @@
       "display_name": "Light",
       "description": "Entity that eluminate the area"
     }
-
-    /*{
-      "id": "",
-      "display_name": "",
-      "description": ""
-    },*/
   ]
 }

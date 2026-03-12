@@ -1,15 +1,11 @@
 #include "uiManager.h"
-#include "editor/uiObjManager.h"
-#include "editor/uiEditorToolsManager.h"
-#include <imgui-SFML.h>
-#include <imgui.h>
-#include <iostream>
 
 bool show_confirm_popup = false;
 int selected_object = -1;
 
 // functions definitons
 void main_menu_Bar_setup();
+void test();
 
 int uiManager::initialize_Ui(sf::RenderWindow& window) {
     // for Ui theme setup and stuff lol
@@ -25,23 +21,50 @@ void uiManager::draw_Ui() {
     objectManagerUi::draw_Ui();
     editorToolManagerUI::draw_ui();
     uiManager::debug_panel();
-
-    ImGui::ShowStyleEditor();
+    //test();
+    //ImGui::ShowStyleEditor();
 }
 
 void uiManager::shutdown_Ui() {
     ImGui::SFML::Shutdown();
 }
 
+static void test() {
+    ImGui::Begin("Splitter test");
+
+    static float w = 200.0f;
+    static float h = 300.0f;
+
+    ImGui::PushStyleVar(ImGuiStyleVar_ItemSpacing, ImVec2(0, 0));
+    ImGui::BeginChild("child1", ImVec2(w, h), true);
+    ImGui::EndChild();
+    ImGui::SameLine();
+    ImGui::InvisibleButton("vsplitter", ImVec2(8.0f, h));
+    if (ImGui::IsItemActive())
+        w += ImGui::GetIO().MouseDelta.x;
+
+    ImGui::SameLine();
+    ImGui::BeginChild("child2", ImVec2(0, h), true);
+    ImGui::EndChild();
+    ImGui::InvisibleButton("hsplitter", ImVec2(-1, 8.0f));
+    if (ImGui::IsItemActive())
+        h += ImGui::GetIO().MouseDelta.y;
+    ImGui::BeginChild("child3", ImVec2(0, 0), true);
+    ImGui::EndChild();
+    ImGui::PopStyleVar();
+
+    ImGui::End();
+}
+
 // used for debugging stuff
 void uiManager::debug_panel() {
     ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-    ImGui::SetNextWindowPos(center);
+    //ImGui::SetNextWindowPos(center);
     ImGui::SetNextWindowSize(ImVec2(250, 200));
     ImGui::Begin("Vulpes Debug Panel", nullptr);
     if (ImGui::Button("Test Button"))
     {
-
+        objectManagerUi::load_entity_info();
     }
     ImGui::End();
 }

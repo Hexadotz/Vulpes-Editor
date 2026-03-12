@@ -6,11 +6,16 @@
 
 #include <SFML/Graphics.hpp>
 #include <imgui.h>
+#include "uiObjManager.h"
+#include "uiEditorToolsManager.h"
+#include <imgui-SFML.h>
+#include <iostream>
 
 class uiManager {
 public:
 	// variables
-
+	static inline bool draw_grid = true;
+	static inline int cell_size = 32;
 	// methods
 	static int initialize_Ui(sf::RenderWindow& window);
 	static bool confirm_window(const char* msg);

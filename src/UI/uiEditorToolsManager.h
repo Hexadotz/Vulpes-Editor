@@ -1,7 +1,12 @@
 #pragma once
 #ifndef UITOOLSMANAGER
 #define UITOOLSMANAGER
+
+#include "uiManager.h"
+#include "uiObjManager.h"
+#include "../application.h"
 #include <imgui.h>
+#include <iostream>
 
 enum class TOOLS {
 	SELECT_TOOL,
@@ -13,8 +18,9 @@ enum class TOOLS {
 class editorToolManagerUI {
 public:
 	static void draw_ui();
-	static inline enum TOOLS current_tool_selected = TOOLS::MOVE_TOOL;
+	static inline enum TOOLS current_tool_selected = TOOLS::SELECT_TOOL;
 	static inline const float panel_y_size = 35;
+	static inline bool is_snapping = false;
 
 private:
 	static const ImGuiWindowFlags panel_flags = ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoScrollbar;

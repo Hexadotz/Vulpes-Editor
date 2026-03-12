@@ -1,7 +1,4 @@
 #include "uiEditorToolsManager.h"
-#include "uiObjManager.h"
-#include <imgui.h>
-#include <iostream>
 
 ImVec2 get_panel_size();
 static int balls = 0;
@@ -36,10 +33,18 @@ void editorToolManagerUI::draw_toolbar()
 	draw_tool_button("scale", TOOLS::SCALE_TOOL);
 	ImGui::SameLine();
 
-	if (ImGui::Button("check"))
+	ImGui::Checkbox("Snap", &uiManager::draw_grid);
+	ImGui::SameLine();
+
+	ImGui::SetNextItemWidth(75.0f);
+	ImGui::InputInt("Grid Size", &uiManager::cell_size);
+	ImGui::SameLine();
+
+	if (ImGui::Button("Center Cam"))
 	{
-		std::cout << balls ;
+		Engine::Application::center_camera();
 	}
+
 	ImGui::End();
 }
 

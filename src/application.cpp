@@ -1,9 +1,4 @@
-#include <SFML/Graphics.hpp>
-#include <imgui-SFML.h>
-#include <imgui.h>
-#include "UI/uiManager.h"
 #include "application.h"
-#include "UI/editor/uiObjManager.h"
 
 bool Engine::Application::process()
 {	
@@ -11,6 +6,8 @@ bool Engine::Application::process()
 		return -1;
 
 	window.setFramerateLimit(60);
+
+    Engine::Application::center_camera();
 
     sf::Clock deltaClock;
     while (window.isOpen())
@@ -25,14 +22,15 @@ bool Engine::Application::process()
             }
         }
 
-        // refreshing the UI each frame
+        window.clear(sf::Color(132, 132, 132));
+
+        // refreshing the UI each frame, i think
         ImGui::SFML::Update(window, deltaClock.restart()); 
         //render ui
         gui_process();
-        //render render to render the render
+        //render the render to render the renderable stuff
         render_process();
 
-        window.clear(sf::Color(132, 136, 132));
         ImGui::SFML::Render(window);
         window.display();
     }
@@ -48,6 +46,10 @@ void Engine::Application::gui_process()
 
 void Engine::Application::render_process()
 {
-
+    if (uiManager::draw_grid) {
+        grid.set_cell_size(uiManager::cell_size);
+        grid.draw_cells(window, cam_view);
+    }
+    Editor::View::process(window, cam_view);
 }
 
