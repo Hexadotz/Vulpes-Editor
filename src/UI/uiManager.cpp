@@ -1,5 +1,6 @@
 #include "uiManager.h"
 
+
 bool show_confirm_popup = false;
 int selected_object = -1;
 
@@ -21,11 +22,17 @@ void uiManager::draw_Ui() {
     objectManagerUi::draw_Ui();
     editorToolManagerUI::draw_ui();
     uiManager::debug_panel();
-    //test();
+    consoleManagerUI::draw_console_panel();
     //ImGui::ShowStyleEditor();
+
+    objectManagerUi::processDeletionQueue();
 }
 
 void uiManager::shutdown_Ui() {
+    objectManagerUi::setSelectedEntity(nullptr);
+
+    consoleManagerUI::clear();
+
     ImGui::SFML::Shutdown();
 }
 

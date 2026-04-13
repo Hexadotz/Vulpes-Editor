@@ -1,26 +1,20 @@
+// editor/editorRender.h
 #pragma once
 
-#ifndef EDITORRENDER_H
-#define EDITORRENDER_H
-
 #include <SFML/Graphics.hpp>
-#include "../application.h"
+#include <imgui.h>
+#include <imgui-SFML.h>
+#include <iostream>
+#include <algorithm>
 
-namespace Editor {
-	class View {
-	public:
-		static inline bool is_panning = false;
-		static inline bool was_panning = false;
+class Editor {
+public:
+    class View {
+    public:
+        static inline bool is_panning = false;
+        static inline bool was_panning = false;
+        static inline sf::Vector2i last_mouse_pos;
 
-		//sf::View cam_view;
-
-		static inline sf::Vector2i last_mouse_pos;
-		static void process(sf::RenderWindow& window, sf::View& cam_view);
-	private:
-
-		//
-	};
-}
-
-#endif // !EDITORRENDER_H
-
+        static void process(sf::RenderWindow& window, sf::View& cam_view);
+    };
+};

@@ -32,7 +32,8 @@ FetchContent_MakeAvailable(ImGui-SFML)
 
 set(LIBS 
     "src/libs/json.hpp" 
-    )
+    "src/libs/vulpUtilities.h"
+     )
 
 set(SOURCES
     "src/main.cpp" 
@@ -43,7 +44,11 @@ set(SOURCES
     "src/UI/uiEditorToolsManager.cpp" "src/UI/uiEditorToolsManager.h" 
     "src/UI/uiConsoleManager.cpp" "src/UI/uiConsoleManager.h" 
     "src/editor/editorRender.h" "src/editor/editorRender.cpp"  
-    "src/editor/snapGrid.h")
+    "src/editor/snapGrid.h" 
+    "src/obj/entites/entity2D.cpp" "src/obj/entites/entity2D.hpp" 
+    "src/obj/entites/testEntity.cpp" "src/obj/entites/testEntity.hpp" 
+    "src/obj/entites/scene.cpp" "src/obj/entites/scene.hpp" 
+    "src/obj/entites/sceneManager.cpp" "src/obj/entites/sceneManager.hpp")
 
 add_executable(VulpesEditor ${SOURCES} ${LIBS})
 target_compile_features(VulpesEditor PRIVATE cxx_std_17)

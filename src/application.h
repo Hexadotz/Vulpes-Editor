@@ -11,6 +11,10 @@
 #include "UI/uiObjManager.h"
 #include "editor/snapGrid.h"
 #include "editor/editorRender.h"
+#include "obj/entites/testEntity.hpp" 
+#include "obj/entites/SceneManager.hpp"
+
+class TestEntityScene;
 
 namespace Engine {
 	class Application {
@@ -23,8 +27,8 @@ namespace Engine {
 			cam_view = window.getDefaultView();
 		}
 
-		bool process();
-		static void center_camera() { cam_view.setCenter({ 1209.0f, 930.0f });} //according to sfml the center is at that coordinate... nice
+		bool process();//1209.0f, 930.0f
+		static void center_camera() { cam_view.setCenter({ 0.0f, 0.0f });} //according to sfml the center is at that coordinate... nice
 		static void get_cam_position() {
 			sf::Vector2f center = cam_view.getCenter();
 			std::cout << center.x << "," << center.y << "\n";

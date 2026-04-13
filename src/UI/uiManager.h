@@ -6,10 +6,15 @@
 
 #include <SFML/Graphics.hpp>
 #include <imgui.h>
-#include "uiObjManager.h"
-#include "uiEditorToolsManager.h"
 #include <imgui-SFML.h>
 #include <iostream>
+#include <memory>
+
+#include "uiObjManager.h"
+#include "uiEditorToolsManager.h"
+#include "../obj/entites/testEntity.hpp"
+#include "uiConsoleManager.h"
+
 
 class uiManager {
 public:

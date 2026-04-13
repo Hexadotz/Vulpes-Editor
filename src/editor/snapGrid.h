@@ -26,45 +26,62 @@ namespace Engine {
 			float top_side = center.y - size.y / 2.0f;
 			float bottom_side = center.y + size.y / 2.0f;
 
-			float margin = cell_size * 10.0f;
-			left_side -= margin;
-			right_side += margin;
-			top_side -= margin;
-			bottom_side += margin;
+			float margin = cell_size * 100.0f;
+			float left_draw = left_side - margin;
+			float right_draw = right_side + margin;
+			float top_draw = top_side - margin;
+			float bottom_draw = bottom_side + margin;
 
-			//std::cout << left_side << " " << right_side << " " << top_side << " " << bottom_side << "\n";
 
 			float x_start = std::floor(left_side / cell_size) * cell_size;
 			float y_start = std::floor(top_side / cell_size) * cell_size;
+
+			int lines_x = static_cast<int>((right_side - x_start) / cell_size) + 2;
+			int lines_y = static_cast<int>((bottom_side - y_start) / cell_size) + 2;
 			
 			sf::VertexArray grid_lines(sf::PrimitiveType::Lines);
-			sf::Color line_color = sf::Color(200, 200, 200, 100);
-			sf::Color thick_line_color = sf::Color(200, 200, 200, 225);
-			sf::Color x_axis_line_color = sf::Color(252, 3, 65);
-			sf::Color y_axis_line_color = sf::Color(3, 252, 128);
+			sf::Color line_color(200, 200, 200, 100);
+			sf::Color thick_line_color(200, 200, 200, 225);
+			sf::Color x_axis_line_color(252, 3, 65, 255);
+			sf::Color y_axis_line_color(3, 252, 128, 255);
 
-			
+
 			for (float x_axis = -1024; x_axis <= 1024; x_axis += cell_size)
 			{
-				sf::Color color = ((int)x_axis % int(cell_size * 2) == 0) ? thick_line_color : line_color;
-				
-				grid_lines.append(sf::Vertex{ sf::Vector2f(x_axis, -1024), color });
-				grid_lines.append(sf::Vertex{ sf::Vector2f(x_axis, 1024), color });
-			}
-			grid_lines.append(sf::Vertex{ sf::Vector2f(x_start, -1024), x_axis_line_color });
-			grid_lines.append(sf::Vertex{ sf::Vector2f(x_start, 1024), x_axis_line_color });
+				if (std::abs(x_axis) < 1)
+				{
+					grid_lines.append(sf::Vertex{ sf::Vector2f(x_start, 1024), x_axis_line_color });
+					grid_lines.append(sf::Vertex{ sf::Vector2f(x_start, -1024), x_axis_line_color });
+				}
+				else {
+					bool thick_line = (static_cast<int>(std::round(x_axis / cell_size)) % 2 == 0);
+					sf::Color color = thick_line ? thick_line_color : line_color;
 
+					grid_lines.append(sf::Vertex{ sf::Vector2f(x_axis, 1024), color });
+					grid_lines.append(sf::Vertex{ sf::Vector2f(x_axis, -1024), color });;
+
+				}
+			}
 			
 			for (float y_axis = -1024; y_axis <= 1024; y_axis += cell_size)
 			{
-				sf::Color color = ((int)y_axis % int(cell_size * 2) == 0) ? thick_line_color : line_color;
+				if (std::abs(y_axis) < 0.01f)
+				{
+					grid_lines.append(sf::Vertex{ sf::Vector2f(1024, y_start), y_axis_line_color });
+					grid_lines.append(sf::Vertex{ sf::Vector2f(-1024, y_start), y_axis_line_color });
+				}
+				else {
+					bool thick_line = (static_cast<int>(std::round(y_axis / cell_size)) % 2 == 0);
+					sf::Color color = thick_line ? thick_line_color : line_color;
 
-				grid_lines.append(sf::Vertex{ sf::Vector2f(1024, y_axis), color });
-				grid_lines.append(sf::Vertex{ sf::Vector2f(-1024, y_axis), color });;
+					grid_lines.append(sf::Vertex{ sf::Vector2f(1024, y_axis), color });
+					grid_lines.append(sf::Vertex{ sf::Vector2f(-1024, y_axis), color });;
+
+				}
 			}
-			grid_lines.append(sf::Vertex{ sf::Vector2f(1024, y_start), y_axis_line_color });
-			grid_lines.append(sf::Vertex{ sf::Vector2f(-1024, y_start), y_axis_line_color });
-
+			//grid_lines.append(sf::Vertex{ sf::Vector2f(1024, y_start), y_axis_line_color });
+			//grid_lines.append(sf::Vertex{ sf::Vector2f(-1024, y_start), y_axis_line_color });
+			
 			window.draw(grid_lines);
 		};
 
