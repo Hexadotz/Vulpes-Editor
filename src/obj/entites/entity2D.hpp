@@ -4,17 +4,14 @@
 #include <memory>
 #include <functional>
 #include <imgui.h>
-#include <algorithm>
-#include <cassert>
-#include <iostream>
+#include "../../libs/json.hpp"
 
 class Scene;
 
 class Entity2D {
 public:
     using Ptr = std::unique_ptr<Entity2D>;
-    using PropertyChangedCallback = std::function<void(Entity2D*, const std::string& propertyName)>;
-    void clearCallbacks();
+   
 
 protected:
     std::string m_name;
@@ -33,8 +30,6 @@ protected:
     bool m_showTransform = true;
     bool m_lockSelection = false;
 
-    PropertyChangedCallback m_onPropertyChanged;
-
     static int s_nextID;
 
 public:
@@ -49,6 +44,9 @@ public:
     virtual void renderEditorUI() = 0;
     virtual Ptr clone() const = 0;
     virtual const char* getTypeName() const = 0;
+
+    virtual nlohmann::json toJson() const;
+    virtual void fromJson(const nlohmann::json& j);
 
     virtual void onSelected() {}
     virtual void onDeselected() {}
@@ -105,10 +103,6 @@ public:
     bool getLockSelection() const { return m_lockSelection; }
     void setLockSelection(bool lock) { m_lockSelection = lock; }
 
-    void setPropertyChangedCallback(PropertyChangedCallback callback) {
-        m_onPropertyChanged = callback;
-    }
-
     virtual void renderTransformUI();
 
     void markTransformDirty();
@@ -130,6 +124,5 @@ protected:
     mutable sf::Transform m_cachedWorldTransform;
     mutable bool m_transformDirty = true; 
 
-    void notifyPropertyChanged(const std::string& propertyName);
     virtual void onTransformChangedInternal();
 };

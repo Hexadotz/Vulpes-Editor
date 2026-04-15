@@ -1,12 +1,42 @@
 #include "testEntity.hpp"
 #include <imgui.h>
 #include <iostream>
+#include "../../libs/json.hpp"
 
 TestEntity::TestEntity(const std::string& name, const sf::Color& color)
     : Entity2D(name), m_color(color) {
     m_shape.setSize({ m_size, m_size });
     m_shape.setFillColor(m_color);
     m_shape.setOrigin({ m_size / 2.0f, m_size / 2.0f });
+}
+
+nlohmann::json TestEntity::toJson() const {
+    nlohmann::json j = Entity2D::toJson();
+
+    j["size"] = m_size;
+    j["color"] = { m_color.r, m_color.g, m_color.b, m_color.a };
+
+    return j;
+}
+
+void TestEntity::fromJson(const nlohmann::json& j) {
+    Entity2D::fromJson(j);
+
+    if (j.contains("size")) {
+        m_size = j["size"].get<float>();
+        m_shape.setSize({ m_size, m_size });
+        m_shape.setOrigin({ m_size / 2.0f, m_size / 2.0f });
+    }
+
+    if (j.contains("color") && j["color"].is_array() && j["color"].size() >= 4) {
+        m_color = sf::Color(
+            j["color"][0].get<uint8_t>(),
+            j["color"][1].get<uint8_t>(),
+            j["color"][2].get<uint8_t>(),
+            j["color"][3].get<uint8_t>()
+        );
+        m_shape.setFillColor(m_color);
+    }
 }
 
 void TestEntity::update(float deltaTime) {
@@ -34,7 +64,6 @@ void TestEntity::render(sf::RenderWindow& window) {
 
     window.draw(m_shape, getWorldTransform());
 
-    // Show children indicator
     if (!m_children.empty()) {
         sf::CircleShape dot(3.0f);
         dot.setFillColor(sf::Color::White);
@@ -202,8 +231,6 @@ void TestEntityScene::cleanup() {
 void TestEntityScene::clearCallbacksRecursive(Entity2D* entity) {
     if (!entity) return;
 
-    // Clear the callback
-    entity->setPropertyChangedCallback(nullptr);
 
     // Clear children's callbacks
     for (const auto& child : entity->getChildren()) {
@@ -356,9 +383,6 @@ void TestEntityScene::renderHierarchyNode(Entity2D* entity) {
 }
 
 void TestEntityScene::setupCallbacksRecursive(Entity2D* entity) {
-    entity->setPropertyChangedCallback([](Entity2D* e, const std::string& prop) {
-        std::cout << "[Entity2D] " << e->getName() << " changed " << prop << std::endl;
-        });
 
     for (const auto& child : entity->getChildren()) {
         setupCallbacksRecursive(child.get());

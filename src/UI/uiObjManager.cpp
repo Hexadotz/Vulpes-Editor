@@ -74,6 +74,8 @@ void objectManagerUi::draw_Ui() {
     objectManagerUi::scene_hierarchyUi();
     objectManagerUi::property_panelUi();
     // ImGui::ShowStyleEditor(); 
+
+    drawRenameDialog();
 }
 
 void objectManagerUi::scene_hierarchyUi() {
@@ -246,8 +248,96 @@ void objectManagerUi::add_windowUi() {
     }
 }
 
+void objectManagerUi::openRenameDialog(Entity2D* entity) {
+    if (!entity) return;
+
+    s_entityToRename = entity;
+    strncpy(s_renameBuffer, entity->getName().c_str(), sizeof(s_renameBuffer) - 1);
+    s_renameBuffer[sizeof(s_renameBuffer) - 1] = '\0';
+    s_renameDialogOpen = true;
+
+    CONSOLE_INFO("[UI] Opened rename dialog for: " + entity->getName());
+}
+
+void objectManagerUi::drawRenameDialog() {
+    if (!s_renameDialogOpen || !s_entityToRename) return;
+
+    // Verify entity still exists
+    auto* scene = SceneManager::instance().getActiveScene();
+    if (scene) {
+        Entity2D* found = scene->findEntityByID(s_entityToRename->getUniqueID());
+        if (!found) {
+            // Entity was deleted
+            s_renameDialogOpen = false;
+            s_entityToRename = nullptr;
+            return;
+        }
+        s_entityToRename = found;
+    }
+
+    ImGui::OpenPopup("Rename Entity");
+
+    ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+    ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+    ImGui::SetNextWindowSize(ImVec2(350, 120));
+
+    if (ImGui::BeginPopupModal("Rename Entity", &s_renameDialogOpen, ImGuiWindowFlags_NoResize))
+    {
+        ImGui::Text("Entity: %s", s_entityToRename->getName().c_str());
+        ImGui::Text("ID: %d", s_entityToRename->getUniqueID());
+        ImGui::Separator();
+
+        ImGui::Text("New Name:");
+        ImGui::SetNextItemWidth(-1);
+
+        if (ImGui::IsWindowAppearing()) {
+            ImGui::SetKeyboardFocusHere();
+        }
+
+        bool enterPressed = ImGui::InputText("##rename", s_renameBuffer, sizeof(s_renameBuffer),
+            ImGuiInputTextFlags_EnterReturnsTrue | ImGuiInputTextFlags_AutoSelectAll);
+
+        ImGui::Spacing();
+
+        bool confirmed = ImGui::Button("OK", ImVec2(120, 0));
+        ImGui::SameLine();
+        bool cancelled = ImGui::Button("Cancel", ImVec2(120, 0));
+
+        if (confirmed || enterPressed) {
+            if (strlen(s_renameBuffer) > 0) {
+                std::string oldName = s_entityToRename->getName();
+                s_entityToRename->setName(s_renameBuffer);
+
+                CONSOLE_SUCCESS("[UI] Renamed entity: " + oldName + " -> " + s_renameBuffer);
+
+                s_renameDialogOpen = false;
+                s_entityToRename = nullptr;
+                ImGui::CloseCurrentPopup();
+            }
+            else {
+                CONSOLE_WARNING("[UI] Cannot rename to empty string");
+            }
+        }
+
+        if (cancelled) {
+            CONSOLE_INFO("[UI] Rename cancelled");
+            s_renameDialogOpen = false;
+            s_entityToRename = nullptr;
+            ImGui::CloseCurrentPopup();
+        }
+
+        ImGui::EndPopup();
+    }
+}
+
 void objectManagerUi::renderEntityNode(Entity2D* entity) {
     if (!entity) return;
+
+    for (Entity2D* queued : s_deletionQueue) {
+        if (queued && queued->getUniqueID() == entity->getUniqueID()) {
+            return; 
+        }
+    }
 
     int entityID = entity->getUniqueID();
     auto* scene = SceneManager::instance().getActiveScene();
@@ -351,6 +441,10 @@ void objectManagerUi::renderEntityNode(Entity2D* entity) {
 
 
     if (ImGui::BeginPopupContextItem()) {
+
+        if (ImGui::MenuItem("Rename")) {
+            openRenameDialog(entity);
+        }
 
         if (ImGui::MenuItem("Duplicate")) {
             Entity2D* duplicated = scene->duplicateEntity(entity);
@@ -487,6 +581,11 @@ void objectManagerUi::renderTransformWidgetsForEntity(Entity2D* entity) {
     if (ImGui::TreeNode("Transform")) {
         sf::Vector2f pos = entity->getPosition();
         if (ImGui::DragFloat2("Position", &pos.x, 0.5f)) {
+            if (uiManager::snap_to_grid && ImGui::GetIO().KeyCtrl) {
+                float cellSize = static_cast<float>(uiManager::cell_size);
+                pos.x = std::round(pos.x / cellSize) * cellSize;
+                pos.y = std::round(pos.y / cellSize) * cellSize;
+            }
             entity->setPosition(pos);
         }
 

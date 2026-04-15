@@ -1,10 +1,8 @@
-// TestEntityScene.hpp
 #pragma once
 #include "Entity2D.hpp"
 #include <vector>
 #include <memory>
 
-// Simple test entity for verification
 class TestEntity : public Entity2D {
 private:
     sf::RectangleShape m_shape;
@@ -14,6 +12,9 @@ private:
 
 public:
     TestEntity(const std::string& name = "Test", const sf::Color& color = sf::Color::Red);
+
+    nlohmann::json toJson() const override;
+    void fromJson(const nlohmann::json& j) override;
 
     void update(float deltaTime) override;
     void render(sf::RenderWindow& window) override;
@@ -52,6 +53,8 @@ public:
 
     void renderHierarchyUI();
     void renderInspectorUI();
+
+
 
 private:
     void clearCallbacksRecursive(Entity2D* entity);

@@ -44,11 +44,17 @@ public:
     static void processDeletionQueue();
     static Entity2D* getSelectedEntity();
 
+    static void openRenameDialog(Entity2D* entity);
+    static void drawRenameDialog();
+
 private:
     static const ImGuiWindowFlags panel_flags = ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoCollapse;
     static const ImGuiWindowFlags object_add_panel_flags = ImGuiWindowFlags_NoCollapse;
     static inline const ImVec2 add_window_size = ImVec2(350, 250);
 
+    static inline Entity2D* s_entityToRename = nullptr;
+    static inline char s_renameBuffer[256] = "";
+    static inline bool s_renameDialogOpen = false;
     static inline std::vector<Entity2D*> s_deletionQueue;
 
     static void add_windowUi();

@@ -1,4 +1,3 @@
-// obj/entites/SceneManager.hpp
 #pragma once
 #include "Scene.hpp"
 #include <vector>
@@ -22,11 +21,9 @@ public:
     const std::vector<Scene::Ptr>& getScenes() const { return m_scenes; }
     Scene* findScene(const std::string& name) const;
 
-    // Forward to active scene
     void update(float deltaTime);
     void render(sf::RenderWindow& window);
 
-    // Global access
     static SceneManager& instance() {
         static SceneManager manager;
         return manager;

@@ -1,5 +1,8 @@
 #include "application.h"
 
+#include "core/event.hpp"
+#include "core/eventBus.hpp"
+
 bool Engine::Application::process()
 {	
 	if (!uiManager::initialize_Ui(window))
@@ -9,10 +12,8 @@ bool Engine::Application::process()
 
     Engine::Application::center_camera();
 
-    // === NEW: Create test entities in the real scene ===
     auto* scene = SceneManager::instance().getActiveScene();
     if (scene) {
-        // Add a test entity
         auto testEntity = std::make_unique<TestEntity>("Player", sf::Color::Red);
         testEntity->setPosition(400, 300);
         scene->addEntity(std::move(testEntity));
@@ -29,6 +30,7 @@ bool Engine::Application::process()
         while (const std::optional event = window.pollEvent())
         {
             ImGui::SFML::ProcessEvent(window, *event); // for mouse clicking and stuff
+ 
 
             if (event->is<sf::Event::Closed>())
             {
@@ -60,22 +62,44 @@ void Engine::Application::gui_process()
     uiManager::draw_Ui();
 }
 
+// application.cpp
+#include "editor/Gizmo.hpp"
+
 void Engine::Application::render_process()
-{   
+{
     window.setView(cam_view);
 
-    
-
     if (uiManager::draw_grid) {
-        grid.set_cell_size(uiManager::cell_size);
-        grid.draw_cells(window, cam_view);
+        grid.setCellSize(static_cast<float>(uiManager::cell_size));
+        grid.draw(window, cam_view);
     }
 
-    /*if (g_testScene) {
-        g_testScene->render(window);
-    }*/
-
     SceneManager::instance().render(window);
+
+    // Gizmo stuff
+    static Gizmo::Gizmo s_gizmo;  
+
+    if (auto* scene = SceneManager::instance().getActiveScene()) {
+        if (auto* selected = scene->getSelectedEntity()) {
+            switch (editorToolManagerUI::current_tool_selected) {
+            case editorToolManagerUI::TOOLS::SELECT_TOOL:
+                s_gizmo.setOperation(Gizmo::GizmoOperation::None);
+                break;
+            case editorToolManagerUI::TOOLS::MOVE_TOOL:
+                s_gizmo.setOperation(Gizmo::GizmoOperation::Translate);
+                break;
+            case editorToolManagerUI::TOOLS::ROTATE_TOOL:
+                s_gizmo.setOperation(Gizmo::GizmoOperation::Rotate);
+                break;
+            case editorToolManagerUI::TOOLS::SCALE_TOOL:
+                s_gizmo.setOperation(Gizmo::GizmoOperation::Scale);
+                break;
+            }
+            if (s_gizmo.getOperation() != Gizmo::GizmoOperation::None) {
+                s_gizmo.render(window, cam_view, selected);
+            }
+        }
+    }
 
     Editor::View::process(window, cam_view);
 

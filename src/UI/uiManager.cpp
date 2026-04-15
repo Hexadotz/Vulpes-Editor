@@ -1,5 +1,5 @@
 #include "uiManager.h"
-
+#include "../obj/entites/SceneManager.hpp"
 
 bool show_confirm_popup = false;
 int selected_object = -1;
@@ -12,6 +12,8 @@ int uiManager::initialize_Ui(sf::RenderWindow& window) {
     // for Ui theme setup and stuff lol
     if (!ImGui::SFML::Init(window)) //  if a fuck up happen
         return 0;
+
+    consoleManagerUI::initialize();
 
     // otherwise it's good to go
     return 1;
@@ -32,7 +34,8 @@ void uiManager::shutdown_Ui() {
     objectManagerUi::setSelectedEntity(nullptr);
 
     consoleManagerUI::clear();
-
+    consoleManagerUI::shutdown();
+    
     ImGui::SFML::Shutdown();
 }
 
@@ -120,10 +123,19 @@ void main_menu_Bar_setup() {
     if (ImGui::BeginMainMenuBar()) {
         // File Menu stuff
         if (ImGui::BeginMenu("File")) {
-            ImGui::MenuItem("New");
-            ImGui::MenuItem("Open");
+            if (ImGui::MenuItem("New Scene")) {
+                SceneManager::instance().createScene("New Scene");
+                CONSOLE_SUCCESS("Created new scene");
+            }
+            if (ImGui::MenuItem("Save Scene")) {
+                uiManager::saveSceneWithDialog();
+            }
+
+            if (ImGui::MenuItem("Load Scene...")) {
+                uiManager::loadSceneWithDialog();
+            }
             ImGui::Separator();
-            ImGui::MenuItem("Quit", nullptr, &show_confirm_popup);
+            if (ImGui::MenuItem("Quit", nullptr, &show_confirm_popup)) {}
             ImGui::EndMenu();
         }
         
@@ -139,4 +151,72 @@ void main_menu_Bar_setup() {
         }
         ImGui::EndMainMenuBar();
     }
+}
+
+#ifdef _WIN32
+#include <windows.h>
+#include <shobjidl.h>
+#endif
+
+void uiManager::saveSceneWithDialog() {
+    auto* scene = SceneManager::instance().getActiveScene();
+    if (!scene) {
+        CONSOLE_WARNING("No active scene to save");
+        return;
+    }
+
+#ifdef _WIN32
+    char filename[MAX_PATH] = "scene.foxres";
+
+    OPENFILENAMEA ofn;
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = NULL;
+    ofn.lpstrFilter = "Fox Scene Files\0*.foxres\0All Files\0*.*\0";
+    ofn.lpstrFile = filename;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.lpstrDefExt = "foxres";
+    ofn.Flags = OFN_OVERWRITEPROMPT;
+
+    if (GetSaveFileNameA(&ofn)) {
+        scene->saveToFile(filename);
+        CONSOLE_SUCCESS("Scene saved to: " + std::string(filename));
+    }
+    else {
+        CONSOLE_INFO("Save cancelled");
+    }
+#else
+    CONSOLE_WARNING("File dialog not implemented for this platform");
+#endif
+}
+
+void uiManager::loadSceneWithDialog() {
+    auto* scene = SceneManager::instance().getActiveScene();
+    if (!scene) {
+        CONSOLE_WARNING("No active scene to load into");
+        return;
+    }
+
+#ifdef _WIN32
+    char filename[MAX_PATH] = "";
+
+    OPENFILENAMEA ofn;
+    ZeroMemory(&ofn, sizeof(ofn));
+    ofn.lStructSize = sizeof(ofn);
+    ofn.hwndOwner = NULL;
+    ofn.lpstrFilter = "Fox Scene Files\0*.foxres\0All Files\0*.*\0";
+    ofn.lpstrFile = filename;
+    ofn.nMaxFile = MAX_PATH;
+    ofn.Flags = OFN_FILEMUSTEXIST | OFN_HIDEREADONLY;
+
+    if (GetOpenFileNameA(&ofn)) {
+        scene->loadFromFile(filename);
+        CONSOLE_SUCCESS("Scene loaded from: " + std::string(filename));
+    }
+    else {
+        CONSOLE_INFO("Load cancelled");
+    }
+#else
+    CONSOLE_WARNING("File dialog not implemented for this platform");
+#endif
 }

@@ -1,9 +1,10 @@
-
 #pragma once
 #include <imgui.h>
 #include <vector>
 #include <string>
 #include <mutex>
+#include "../core/EventBus.hpp"
+#include "../core/EventListener.hpp"
 
 #define CONSOLE_INFO(msg)    consoleManagerUI::info(msg)
 #define CONSOLE_WARNING(msg) consoleManagerUI::warning(msg)
@@ -27,7 +28,7 @@ struct ConsoleMessage {
     }
 };
 
-class consoleManagerUI {
+class consoleManagerUI : public Vulpes::EventListener {
 public:
     static void draw_console_panel();
     static void draw_console_tab();
@@ -43,8 +44,13 @@ public:
     static void error(const std::string& text);
     static void success(const std::string& text);
 
+    static void initialize();
+    static void shutdown();
+
+    void onEvent(const Vulpes::Event& event) override;
+
 private:
     static ImVec4 get_color_for_type(ConsoleMessageType type);
 
-    // NO static inline members here anymore!
+    static inline consoleManagerUI* s_instance = nullptr;
 };

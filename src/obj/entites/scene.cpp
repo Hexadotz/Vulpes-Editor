@@ -2,8 +2,9 @@
 #include "Scene.hpp"
 #include <fstream>
 #include <iostream>
-
 #include "../../UI/uiManager.h"
+
+
 using json = nlohmann::json;
 
 Scene::Scene(const std::string& name)
@@ -19,11 +20,7 @@ Scene::~Scene() {
         m_selectedEntity = nullptr;
     }
 
-    for (auto& entity : m_rootEntities) {
-        if (entity) {
-            entity->clearCallbacks();
-        }
-    }
+   
 
     m_rootEntities.clear();
 
@@ -36,11 +33,6 @@ void Scene::clear() {
         m_selectedEntity = nullptr;
     }
 
-    for (auto& entity : m_rootEntities) {
-        if (entity) {
-            entity->clearCallbacks();
-        }
-    }
 
     m_rootEntities.clear();
     markModified();
@@ -56,7 +48,6 @@ void Scene::update(float deltaTime) {
 }
 
 void Scene::render(sf::RenderWindow& window) {
-    // Collect all entities for Z-order sorting
     std::vector<Entity2D*> allEntities;
     for (auto& entity : m_rootEntities) {
         if (entity && entity->isVisible()) {
@@ -64,13 +55,11 @@ void Scene::render(sf::RenderWindow& window) {
         }
     }
 
-    // Sort by Z-order
     std::sort(allEntities.begin(), allEntities.end(),
         [](Entity2D* a, Entity2D* b) {
             return a->getZOrder() < b->getZOrder();
         });
 
-    // Render in order
     for (auto* entity : allEntities) {
         entity->render(window);
     }
@@ -82,25 +71,27 @@ Entity2D* Scene::addEntity(EntityPtr entity) {
     Entity2D* ptr = entity.get();
     m_rootEntities.push_back(std::move(entity));
 
-    std::cout << "[Scene] Added entity: " << ptr->getName()
-        << " (ID: " << ptr->getUniqueID() << ")" << std::endl;
+    Vulpes::EventBus::instance().post<Vulpes::EntityCreatedEvent>(
+        ptr->getUniqueID(), ptr->getName(), ptr->getTypeName()
+    );
 
     markModified();
     return ptr;
 }
 
-// obj/entites/Scene.cpp
 Scene::EntityPtr Scene::removeEntity(Entity2D* entity) {
     if (!entity) return nullptr;
 
+    Vulpes::EventBus::instance().post<Vulpes::EntityDestroyedEvent>(
+        entity->getUniqueID(), entity->getName()
+    );
+
     CONSOLE_INFO("[Scene] Attempting to remove: " + entity->getName() + " (ID: " + std::to_string(entity->getUniqueID()) + ")");
 
-    // Check root entities first
     auto it = std::find_if(m_rootEntities.begin(), m_rootEntities.end(),
         [entity](const EntityPtr& ptr) { return ptr.get() == entity; });
 
     if (it != m_rootEntities.end()) {
-        // Clear selection if this entity was selected
         if (m_selectedEntity == entity) {
             m_selectedEntity->setSelected(false);
             m_selectedEntity = nullptr;
@@ -111,10 +102,9 @@ Scene::EntityPtr Scene::removeEntity(Entity2D* entity) {
 
         CONSOLE_SUCCESS("[Scene] Removed root entity: " + removed->getName());
         markModified();
-        return removed;  // Return the unique_ptr
+        return removed;  
     }
 
-    // Entity not found in root - check children recursively
     for (auto& rootEntity : m_rootEntities) {
         if (rootEntity) {
             EntityPtr removed = rootEntity->removeChild(entity);
@@ -127,7 +117,7 @@ Scene::EntityPtr Scene::removeEntity(Entity2D* entity) {
                 }
 
                 markModified();
-                return removed;  // Return the unique_ptr
+                return removed;  
             }
         }
     }
@@ -142,26 +132,20 @@ Entity2D* Scene::duplicateEntity(Entity2D* entity) {
     std::cout << "[Scene] Duplicating: " << entity->getName()
         << " (ID: " << entity->getUniqueID() << ")" << std::endl;
 
-    // Clone the entity
     auto clone = entity->clone();
     if (!clone) {
         std::cerr << "[Scene] Clone failed!" << std::endl;
         return nullptr;
     }
 
-    // Set new name
     std::string newName = entity->getName() + "_Copy";
     clone->setName(newName);
 
-    // Offset position
     clone->setPosition(entity->getPosition() + sf::Vector2f(30.0f, 30.0f));
 
-    // Clear any callbacks that might cause issues
-    clone->setPropertyChangedCallback(nullptr);
 
     Entity2D* clonePtr = clone.get();
 
-    // Add to same parent or as root
     Entity2D* parent = entity->getParent();
 
     if (parent) {
@@ -181,6 +165,8 @@ Entity2D* Scene::duplicateEntity(Entity2D* entity) {
 void Scene::selectEntity(Entity2D* entity) {
     if (m_selectedEntity == entity) return;
 
+    int oldID = m_selectedEntity ? m_selectedEntity->getUniqueID() : -1;
+
     if (m_selectedEntity) {
         m_selectedEntity->setSelected(false);
     }
@@ -189,8 +175,11 @@ void Scene::selectEntity(Entity2D* entity) {
 
     if (m_selectedEntity) {
         m_selectedEntity->setSelected(true);
-        std::cout << "[Scene] Selected: " << m_selectedEntity->getName() << std::endl;
     }
+
+    int newID = m_selectedEntity ? m_selectedEntity->getUniqueID() : -1;
+
+    Vulpes::EventBus::instance().post<Vulpes::SelectionChangedEvent>(oldID, newID);
 }
 
 void Scene::deselectAll() {
@@ -222,7 +211,6 @@ Entity2D* Scene::findEntityByID(int id) const {
 }
 
 Entity2D* Scene::getEntityAtPosition(const sf::Vector2f& worldPos) {
-    // Search from top to bottom (reverse order)
     for (auto it = m_rootEntities.rbegin(); it != m_rootEntities.rend(); ++it) {
         if (Entity2D* hit = findEntityAtPositionRecursive(it->get(), worldPos)) {
             return hit;
@@ -258,40 +246,89 @@ void Scene::sortByZOrder() {
 }
 
 void Scene::saveToFile(const std::string& path) {
-    json j;
-    j["name"] = m_name;
-    j["entities"] = json::array();
+    nlohmann::json j;
 
-    // TODO: Implement entity serialization
-    // This requires each entity type to have a serialize() method
+    j["name"] = m_name;
+    j["version"] = "1.0";
+    j["entities"] = nlohmann::json::array();
+
+    for (const auto& entity : m_rootEntities) {
+        if (entity) {
+            j["entities"].push_back(entity->toJson());
+        }
+    }
 
     std::ofstream file(path);
     if (file.is_open()) {
-        file << j.dump(4);
-        std::cout << "[Scene] Saved to: " << path << std::endl;
+        file << j.dump(4); 
+        CONSOLE_SUCCESS("Scene saved to: " + path);
         clearModified();
+    }
+    else {
+        CONSOLE_ERROR("Failed to save scene to: " + path);
     }
 }
 
 void Scene::loadFromFile(const std::string& path) {
     std::ifstream file(path);
     if (!file.is_open()) {
-        std::cerr << "[Scene] Failed to open: " << path << std::endl;
+        CONSOLE_ERROR("Failed to open scene file: " + path);
         return;
     }
 
-    json j = json::parse(file);
-    m_name = j.value("name", "Loaded Scene");
+    try {
+        nlohmann::json j = nlohmann::json::parse(file);
 
-    clear();
+        clear();
 
-    // TODO: Implement entity deserialization
+        if (j.contains("name")) {
+            m_name = j["name"].get<std::string>();
+        }
 
-    std::cout << "[Scene] Loaded from: " << path << std::endl;
-    clearModified();
+        if (j.contains("entities") && j["entities"].is_array()) {
+            for (const auto& entityJson : j["entities"]) {
+                if (entityJson.contains("type")) {
+                    std::string type = entityJson["type"].get<std::string>();
+
+                    EntityPtr entity;
+                    if (type == "TestEntity") {
+                        entity = std::make_unique<TestEntity>();
+                    }
+
+                    if (entity) {
+                        entity->fromJson(entityJson);
+
+                        Vulpes::EventBus::instance().post<Vulpes::EntityCreatedEvent>(
+                            entity->getUniqueID(), entity->getName(), type
+                        );
+
+                        m_rootEntities.push_back(std::move(entity));
+                    }
+                }
+            }
+
+            rebuildHierarchyFromJson(j["entities"]);
+        }
+
+        CONSOLE_SUCCESS("Scene loaded from: " + path);
+        clearModified();
+
+    }
+    catch (const std::exception& e) {
+        CONSOLE_ERROR("Failed to parse scene file: " + std::string(e.what()));
+    }
 }
 
-// === Private Helpers ===
+void Scene::rebuildHierarchyFromJson(const nlohmann::json& entitiesJson) {
+    std::unordered_map<int, Entity2D*> idMap;
+    for (const auto& entity : m_rootEntities) {
+        if (entity) {
+            idMap[entity->getUniqueID()] = entity.get();
+        }
+    }
+}
+
+
 
 void Scene::updateRecursive(Entity2D* entity, float deltaTime) {
     if (!entity) return;

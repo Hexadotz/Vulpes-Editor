@@ -8,15 +8,16 @@
 #include <imgui.h>
 #include <iostream>
 
-enum class TOOLS {
-	SELECT_TOOL,
-	MOVE_TOOL,
-	ROTATE_TOOL,
-	SCALE_TOOL
-};
+
 
 class editorToolManagerUI {
 public:
+	enum class TOOLS {
+		SELECT_TOOL,
+		MOVE_TOOL,
+		ROTATE_TOOL,
+		SCALE_TOOL
+	};
 	static void draw_ui();
 	static inline enum TOOLS current_tool_selected = TOOLS::SELECT_TOOL;
 	static inline const float panel_y_size = 35;

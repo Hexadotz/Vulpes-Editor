@@ -12,40 +12,39 @@ ImVec2 get_panel_size() {
 
 void editorToolManagerUI::draw_toolbar()
 {
-	ImVec2 position = ImVec2(objectManagerUi::get_panel_size().x, 19);
-	ImVec2 size = get_panel_size();
-	ImGui::SetNextWindowPos(position);
-	ImGui::SetNextWindowSize(size);
+    ImVec2 position = ImVec2(objectManagerUi::get_panel_size().x, 19);
+    ImVec2 size = get_panel_size();
+    ImGui::SetNextWindowPos(position);
+    ImGui::SetNextWindowSize(size);
 
-	ImGui::Begin("Tools", nullptr, panel_flags);
+    ImGui::Begin("Tools", nullptr, panel_flags);
 
-	/*if (ImGui::Button("select")) {
-		current_tool_selected = TOOLS::SELECT_TOOL;
-		balls = 0;
-	}
-	*/
-	draw_tool_button("select", TOOLS::SELECT_TOOL);
-	ImGui::SameLine();
-	draw_tool_button("move", TOOLS::MOVE_TOOL);
-	ImGui::SameLine();
-	draw_tool_button("rotate", TOOLS::ROTATE_TOOL);
-	ImGui::SameLine();
-	draw_tool_button("scale", TOOLS::SCALE_TOOL);
-	ImGui::SameLine();
+    draw_tool_button("Select", TOOLS::SELECT_TOOL);
+    ImGui::SameLine();
+    draw_tool_button("Move", TOOLS::MOVE_TOOL);
+    ImGui::SameLine();
+    draw_tool_button("Rotate", TOOLS::ROTATE_TOOL);
+    ImGui::SameLine();
+    draw_tool_button("Scale", TOOLS::SCALE_TOOL);
+    ImGui::SameLine();
 
-	ImGui::Checkbox("Snap", &uiManager::draw_grid);
-	ImGui::SameLine();
+    ImGui::Checkbox("Snap", &uiManager::snap_to_grid);
+    ImGui::SameLine();
 
-	ImGui::SetNextItemWidth(75.0f);
-	ImGui::InputInt("Grid Size", &uiManager::cell_size);
-	ImGui::SameLine();
+    ImGui::Checkbox("Show Grid", &uiManager::draw_grid);
+    ImGui::SameLine();
 
-	if (ImGui::Button("Center Cam"))
-	{
-		Engine::Application::center_camera();
-	}
+    ImGui::SetNextItemWidth(75.0f);
+    ImGui::InputInt("Grid Size", &uiManager::cell_size);
+    ImGui::SameLine();
 
-	ImGui::End();
+    if (ImGui::Button("Center Cam"))
+    {
+        Engine::Application::center_camera();
+    }
+    ImGui::SameLine();
+
+    ImGui::End();
 }
 
 void editorToolManagerUI::draw_tool_button(const char* label, TOOLS tool_type)

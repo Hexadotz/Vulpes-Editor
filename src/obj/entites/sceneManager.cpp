@@ -1,4 +1,4 @@
-#include "SceneManager.hpp"
+#include "sceneManager.hpp"
 #include <iostream>
 
 SceneManager::SceneManager() {
@@ -16,6 +16,9 @@ Scene* SceneManager::createScene(const std::string& name) {
     auto scene = std::make_unique<Scene>(name);
     Scene* ptr = scene.get();
     m_scenes.push_back(std::move(scene));
+    
+
+    Vulpes::EventBus::instance().post<Vulpes::SceneCreatedEvent>(name);
 
     CONSOLE_INFO("[SceneManager] Created scene: " + name);
     return ptr;
@@ -36,8 +39,12 @@ void SceneManager::removeScene(Scene* scene) {
 
 void SceneManager::setActiveScene(Scene* scene) {
     m_activeScene = scene;
-    std::cout << "[SceneManager] Active scene: "
-        << (scene ? scene->getName() : "None") << std::endl;
+
+    if (m_activeScene) {
+        Vulpes::EventBus::instance().post<Vulpes::SceneActivatedEvent>(
+            m_activeScene->getName()
+        );
+    }
 }
 
 Scene* SceneManager::findScene(const std::string& name) const {

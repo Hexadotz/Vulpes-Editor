@@ -48,7 +48,8 @@ set(SOURCES
     "src/obj/entites/entity2D.cpp" "src/obj/entites/entity2D.hpp" 
     "src/obj/entites/testEntity.cpp" "src/obj/entites/testEntity.hpp" 
     "src/obj/entites/scene.cpp" "src/obj/entites/scene.hpp" 
-    "src/obj/entites/sceneManager.cpp" "src/obj/entites/sceneManager.hpp")
+    "src/obj/entites/sceneManager.cpp" "src/obj/entites/sceneManager.hpp" "src/editor/snapGrid.cpp" "src/editor/gizmo.cpp" 
+    "src/core/event.cpp" "src/core/event.hpp" "src/core/eventBus.hpp" "src/core/eventListener.hpp")
 
 add_executable(VulpesEditor ${SOURCES} ${LIBS})
 target_compile_features(VulpesEditor PRIVATE cxx_std_17)
